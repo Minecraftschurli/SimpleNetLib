@@ -51,6 +51,9 @@ import net.minecraftforge.fmllegacy.network.NetworkEvent;
  *     }
  * }
  * }</pre>
+ *
+ * @author Minecraftschurli
+ * @version 2021-06-15
  */
 @SuppressWarnings("unused")
 public interface IPacket {
