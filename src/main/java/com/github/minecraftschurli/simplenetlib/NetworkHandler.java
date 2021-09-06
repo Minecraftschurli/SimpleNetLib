@@ -24,6 +24,7 @@ import org.apache.logging.log4j.MarkerManager;
 import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -38,7 +39,7 @@ import java.util.function.Supplier;
  */
 @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unused"})
 public final class NetworkHandler {
-    private static final Map<ResourceLocation, NetworkHandler> HANDLERS = new HashMap<>();
+    private static final Map<ResourceLocation, NetworkHandler> HANDLERS = new ConcurrentHashMap<>();
     private static final Marker SEND_MARKER = MarkerManager.getMarker("NETWORK_SEND");
     private static final Marker REGISTER_MARKER = MarkerManager.getMarker("NETWORK_REGISTER");
 
