@@ -160,8 +160,8 @@ public final class NetworkHandler {
                            Supplier<String> version,
                            Predicate<String> acceptVersionClient,
                            Predicate<String> acceptVersionServer) {
-        this.logger = LogManager.getLogger(String.format("NetworkHandler<%s>(%s)", getClass().getSimpleName(), rl));
-        this.logger.debug("Created NetworkHandler of type {} with id {}", getClass().getName(), rl);
+        this.logger = LogManager.getLogger(String.format("NetworkHandler(%s)", rl));
+        this.logger.debug("Created NetworkHandler for mod with id {}", rl);
         this.channel = NetworkRegistry.newSimpleChannel(rl, version, acceptVersionClient, acceptVersionServer);
     }
 
