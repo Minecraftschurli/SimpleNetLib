@@ -33,9 +33,6 @@ import java.util.function.Supplier;
 
 /**
  * This class makes communication between server and client easier by wrapping the vanilla SimpleChannel network implementation
- *
- * @author Minecraftschurli
- * @version 2021-06-15
  */
 @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unused"})
 public final class NetworkHandler {
