@@ -1,16 +1,16 @@
 package com.github.minecraftschurli.simplenetlib;
 
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.fmllegacy.network.NetworkDirection;
 import net.minecraftforge.fmllegacy.network.NetworkEvent;
 import net.minecraftforge.fmllegacy.network.NetworkRegistry;
@@ -23,7 +23,10 @@ import org.apache.logging.log4j.MarkerManager;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
@@ -205,7 +208,7 @@ public final class NetworkHandler {
             if (context == null) {
                 return;
             }
-            if (dir.filter(d -> d == context.getDirection()).isEmpty()) {
+            if (dir.isPresent() && dir.get() != context.getDirection()) {
                 return;
             }
             context.setPacketHandled(msg.handle_(context));
@@ -223,11 +226,11 @@ public final class NetworkHandler {
      * @param dir the Optional NetworkDirection for the Packet
      * @param <T> the Type of the Packet
      */
-    public <T extends IPacket> void register(Class<T> clazz,
-                                              BiConsumer<T, FriendlyByteBuf> encoder,
-                                              Function<FriendlyByteBuf, T> decoder,
-                                              BiConsumer<T, Supplier<NetworkEvent.Context>> consumer,
-                                              Optional<NetworkDirection> dir) {
+    public <T> void register(Class<T> clazz,
+                             BiConsumer<T, FriendlyByteBuf> encoder,
+                             Function<FriendlyByteBuf, T> decoder,
+                             BiConsumer<T, Supplier<NetworkEvent.Context>> consumer,
+                             Optional<NetworkDirection> dir) {
         if (dir.isPresent()) {
             this.logger.debug(REGISTER_MARKER, "Registered package {} for direction {}", clazz.getName(), dir.get().name());
         } else {
@@ -324,6 +327,21 @@ public final class NetworkHandler {
         }
         this.logger.debug(SEND_MARKER, "Sending packet {} to all clients tracking entity {}", packet.getClass().getName(), entity);
         this.channel.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), packet);
+    }
+
+    /**
+     * Sends a Packet to the specified Player or all players if it is null
+     *
+     * @side server
+     * @param packet the Packet to send
+     * @param player the Player to send to or null
+     */
+    public void sendToPlayerOrAll(IPacket packet, @Nullable Player player) {
+        if (player == null) {
+            this.sendToAll(packet);
+        } else {
+            this.sendToPlayer(packet, player);
+        }
     }
 
     /**
