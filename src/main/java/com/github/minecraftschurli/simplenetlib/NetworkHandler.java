@@ -20,8 +20,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -40,6 +40,7 @@ import java.util.function.Supplier;
 @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unused"})
 public final class NetworkHandler {
     private static final Map<ResourceLocation, NetworkHandler> HANDLERS = new ConcurrentHashMap<>();
+
     private static final Marker SEND_MARKER = MarkerManager.getMarker("NETWORK_SEND");
     private static final Marker REGISTER_MARKER = MarkerManager.getMarker("NETWORK_REGISTER");
 

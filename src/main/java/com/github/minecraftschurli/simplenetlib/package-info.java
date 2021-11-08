@@ -1,1 +1,7 @@
+@ParametersAreNonnullByDefault
+@MethodsReturnNonnullByDefault
 package com.github.minecraftschurli.simplenetlib;
+
+import net.minecraft.MethodsReturnNonnullByDefault;
+
+import javax.annotation.ParametersAreNonnullByDefault;
