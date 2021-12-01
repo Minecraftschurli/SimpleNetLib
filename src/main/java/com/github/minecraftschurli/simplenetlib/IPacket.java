@@ -1,7 +1,7 @@
 package com.github.minecraftschurli.simplenetlib;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fmllegacy.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 
 /**
  * The {@link IPacket} interface represents the base for all packets handled by simplenetlib.<br>
