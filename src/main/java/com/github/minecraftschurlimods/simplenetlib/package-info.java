@@ -1,6 +1,6 @@
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-package com.github.minecraftschurli.simplenetlib;
+package com.github.minecraftschurlimods.simplenetlib;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 

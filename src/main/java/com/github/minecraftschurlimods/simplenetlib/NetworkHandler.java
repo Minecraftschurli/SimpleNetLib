@@ -1,4 +1,4 @@
-package com.github.minecraftschurli.simplenetlib;
+package com.github.minecraftschurlimods.simplenetlib;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;

@@ -1,4 +1,4 @@
-package com.github.minecraftschurli.simplenetlib;
+package com.github.minecraftschurlimods.simplenetlib;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
@@ -7,7 +7,7 @@ import net.minecraftforge.network.NetworkEvent;
  * The {@link IPacket} interface represents the base for all packets handled by simplenetlib.<br>
  * @implSpec All implementations either need to have a default constructor and implement the deserialize method or a constructor with a single {@link FriendlyByteBuf} parameter.
  * <pre>{@code
- * public class TestPacket implements com.github.minecraftschurli.simplenetlib.IPacket {
+ * public class TestPacket implements IPacket {
  *     private int i;
  *
  *     public TestPacket() {} // create empty instance for deserialization
@@ -35,7 +35,7 @@ import net.minecraftforge.network.NetworkEvent;
  * }</pre>
  * or
  * <pre>{@code
- * public record ExamplePacket(int i) implements com.github.minecraftschurli.simplenetlib.IPacket {
+ * public record ExamplePacket(int i) implements IPacket {
  *     public ExamplePacket(FriendlyByteBuf buf) {
  *         this(buf.readInt()); // deserialize from FriendlyByteBuf
  *     }

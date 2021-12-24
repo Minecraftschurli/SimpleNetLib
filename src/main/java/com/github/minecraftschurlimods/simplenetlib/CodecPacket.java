@@ -1,4 +1,4 @@
-package com.github.minecraftschurli.simplenetlib;
+package com.github.minecraftschurlimods.simplenetlib;
 
 import com.mojang.serialization.Codec;
 import net.minecraft.network.FriendlyByteBuf;
