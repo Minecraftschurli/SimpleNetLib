@@ -249,10 +249,10 @@ public final class NetworkHandler {
      */
     public void sendToWorld(IPacket packet, LevelAccessor world) {
         if (world.isClientSide()) {
-            this.logger.debug(SEND_MARKER, "Tried to send a message from the wrong side");
+            this.logger.trace(SEND_MARKER, "Tried to send a message from the wrong side");
             return;
         }
-        this.logger.debug(SEND_MARKER, "Sending packet {} from server to the world {}", packet.getClass().getName(), world);
+        this.logger.trace(SEND_MARKER, "Sending packet {} from server to the world {}", packet.getClass().getName(), world);
         this.channel.send(PacketDistributor.DIMENSION.with(((Level) world)::dimension), packet);
     }
 
@@ -267,10 +267,10 @@ public final class NetworkHandler {
      */
     public void sendToAllAround(IPacket packet, LevelAccessor world, BlockPos pos, float radius) {
         if (world.isClientSide()) {
-            this.logger.debug(SEND_MARKER, "Tried to send a message from the wrong side");
+            this.logger.trace(SEND_MARKER, "Tried to send a message from the wrong side");
             return;
         }
-        this.logger.debug(SEND_MARKER, "Sending packet {} to all clients in the world {} in radius {} around position {}", packet.getClass().getName(), world, radius, pos);
+        this.logger.trace(SEND_MARKER, "Sending packet {} to all clients in the world {} in radius {} around position {}", packet.getClass().getName(), world, radius, pos);
         this.channel.send(PacketDistributor.NEAR.with(PacketDistributor.TargetPoint.p(pos.getX(), pos.getY(), pos.getZ(), radius, ((Level) world).dimension())), packet);
     }
 
@@ -307,10 +307,10 @@ public final class NetworkHandler {
      */
     public void sendToAllTracking(IPacket packet, LevelChunk chunk) {
         if (chunk.getLevel().isClientSide()) {
-            this.logger.debug(SEND_MARKER, "Tried to send a message from the wrong side");
+            this.logger.trace(SEND_MARKER, "Tried to send a message from the wrong side");
             return;
         }
-        this.logger.debug(SEND_MARKER, "Sending packet {} to all clients tracking chunk {}", packet.getClass().getName(), chunk);
+        this.logger.trace(SEND_MARKER, "Sending packet {} to all clients tracking chunk {}", packet.getClass().getName(), chunk);
         this.channel.send(PacketDistributor.TRACKING_CHUNK.with(() -> chunk), packet);
     }
 
@@ -323,10 +323,10 @@ public final class NetworkHandler {
      */
     public void sendToAllTracking(IPacket packet, Entity entity) {
         if (entity.level.isClientSide()) {
-            this.logger.debug(SEND_MARKER, "Tried to send a message from the wrong side");
+            this.logger.trace(SEND_MARKER, "Tried to send a message from the wrong side");
             return;
         }
-        this.logger.debug(SEND_MARKER, "Sending packet {} to all clients tracking entity {}", packet.getClass().getName(), entity);
+        this.logger.trace(SEND_MARKER, "Sending packet {} to all clients tracking entity {}", packet.getClass().getName(), entity);
         this.channel.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), packet);
     }
 
@@ -354,10 +354,10 @@ public final class NetworkHandler {
      */
     public void sendToPlayer(IPacket packet, Player player) {
         if (player.level.isClientSide() || !(player instanceof ServerPlayer)) {
-            this.logger.debug(SEND_MARKER, "Tried to send a message from the wrong side");
+            this.logger.trace(SEND_MARKER, "Tried to send a message from the wrong side");
             return;
         }
-        this.logger.debug(SEND_MARKER, "Sending packet {} to player {}", packet.getClass().getName(), player);
+        this.logger.trace(SEND_MARKER, "Sending packet {} to player {}", packet.getClass().getName(), player);
         this.channel.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), packet);
     }
 
@@ -368,7 +368,7 @@ public final class NetworkHandler {
      * @param packet the Packet to send
      */
     public void sendToAll(IPacket packet) {
-        this.logger.debug(SEND_MARKER, "Sending packet {} to all clients", packet.getClass().getName());
+        this.logger.trace(SEND_MARKER, "Sending packet {} to all clients", packet.getClass().getName());
         this.channel.send(PacketDistributor.ALL.noArg(), packet);
     }
 
@@ -379,7 +379,7 @@ public final class NetworkHandler {
      * @param packet the Packet to send
      */
     public void sendToServer(IPacket packet) {
-        this.logger.debug(SEND_MARKER, "Sending packet {} to server", packet.getClass().getName());
+        this.logger.trace(SEND_MARKER, "Sending packet {} to server", packet.getClass().getName());
         this.channel.sendToServer(packet);
     }
 
@@ -391,7 +391,7 @@ public final class NetworkHandler {
      * @param context the context of the received Packet
      */
     public void reply(IPacket packet, NetworkEvent.Context context) {
-        this.logger.debug(SEND_MARKER, "Sending packet {} as reply to context NetworkEvent.Context[{}]", packet.getClass().getName(), context.getDirection().name());
+        this.logger.trace(SEND_MARKER, "Sending packet {} as reply to context NetworkEvent.Context[{}]", packet.getClass().getName(), context.getDirection().name());
         this.channel.reply(packet, context);
     }
 
