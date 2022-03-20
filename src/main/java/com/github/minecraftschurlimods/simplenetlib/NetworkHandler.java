@@ -23,6 +23,7 @@ import org.apache.logging.log4j.MarkerManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
@@ -41,7 +42,7 @@ import java.util.function.Supplier;
 public final class NetworkHandler {
     private static final Map<ResourceLocation, NetworkHandler> HANDLERS = new ConcurrentHashMap<>();
 
-    private static final Marker SEND_MARKER = MarkerManager.getMarker("NETWORK_SEND");
+    private static final Marker SEND_MARKER     = MarkerManager.getMarker("NETWORK_SEND");
     private static final Marker REGISTER_MARKER = MarkerManager.getMarker("NETWORK_REGISTER");
 
     private final Logger        logger;
@@ -80,7 +81,7 @@ public final class NetworkHandler {
      * @return the {@link NetworkHandler} associated with the {@link ResourceLocation}
      */
     public static NetworkHandler create(ResourceLocation rl, String version) {
-        return HANDLERS.computeIfAbsent(rl, resourceLocation -> new NetworkHandler(resourceLocation, version));
+        return create(rl, () -> version, version::equals);
     }
 
     /**
@@ -110,7 +111,7 @@ public final class NetworkHandler {
     public static NetworkHandler create(ResourceLocation rl,
                                         Supplier<String> version,
                                         Predicate<String> acceptVersion) {
-        return HANDLERS.computeIfAbsent(rl, resourceLocation -> new NetworkHandler(resourceLocation, version, acceptVersion));
+        return create(rl, version, acceptVersion, acceptVersion);
     }
 
     /**
@@ -147,16 +148,6 @@ public final class NetworkHandler {
         return HANDLERS.computeIfAbsent(rl, resourceLocation -> new NetworkHandler(resourceLocation, version, acceptVersionClient, acceptVersionServer));
     }
 
-    private NetworkHandler(ResourceLocation rl, String version) {
-        this(rl, () -> version, version::equals);
-    }
-
-    private NetworkHandler(ResourceLocation rl,
-                           Supplier<String> version,
-                           Predicate<String> acceptVersion) {
-        this(rl, version, acceptVersion, acceptVersion);
-    }
-
     private NetworkHandler(ResourceLocation rl,
                            Supplier<String> version,
                            Predicate<String> acceptVersionClient,
@@ -164,12 +155,6 @@ public final class NetworkHandler {
         this.logger = LogManager.getLogger(String.format("NetworkHandler(%s)", rl));
         this.logger.debug("Created NetworkHandler for mod with id {}", rl);
         this.channel = NetworkRegistry.newSimpleChannel(rl, version, acceptVersionClient, acceptVersionServer);
-    }
-
-    private int nextID() {
-        synchronized (id) {
-            return id.getAndIncrement();
-        }
     }
 
     /**
@@ -181,40 +166,6 @@ public final class NetworkHandler {
      */
     public <T extends IPacket> void register(Class<T> clazz, @Nullable NetworkDirection dir) {
         this.register(clazz, Optional.ofNullable(dir));
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T extends IPacket> void register(Class<T> clazz, Optional<NetworkDirection> dir) {
-        BiConsumer<T, FriendlyByteBuf> encoder = IPacket::serialize;
-        Function<FriendlyByteBuf, T> decoder = Arrays.stream(clazz.getConstructors())
-                .map(constructor -> (Constructor<T>)constructor)
-                .filter(constructor ->
-                        constructor.getParameterCount() == 0 ||
-                                (constructor.getParameterCount() == 1 &&
-                                        constructor.getParameterTypes()[0].equals(FriendlyByteBuf.class)))
-                .max(Comparator.comparingInt(Constructor::getParameterCount))
-                .<ThrowingFunction<FriendlyByteBuf, T>>map(constructor -> {
-                    if (constructor.getParameterCount() == 0) {
-                        return (buf) -> {
-                            T packet = constructor.newInstance();
-                            packet.deserialize(buf);
-                            return packet;
-                        };
-                    } else {
-                        return constructor::newInstance;
-                    }
-                }).orElseThrow(() -> new IllegalArgumentException(String.format("%s does not supply a deserialization mechanism", clazz)));
-        BiConsumer<T, Supplier<NetworkEvent.Context>> consumer = (msg, supp) -> {
-            NetworkEvent.Context context = supp.get();
-            if (context == null) {
-                return;
-            }
-            if (dir.isPresent() && dir.get() != context.getDirection()) {
-                return;
-            }
-            context.setPacketHandled(msg.handle_(context));
-        };
-        this.register(clazz, encoder, decoder, consumer, dir);
     }
 
     /**
@@ -241,19 +192,19 @@ public final class NetworkHandler {
     }
 
     /**
-     * Sends a Packet to all Players in world
+     * Sends a Packet to all Players in level
      *
      * @side server
      * @param packet the Packet to send
-     * @param world  the World to send to
+     * @param level  the World to send to
      */
-    public void sendToWorld(IPacket packet, LevelAccessor world) {
-        if (world.isClientSide()) {
+    public void sendToWorld(IPacket packet, LevelAccessor level) {
+        if (level.isClientSide()) {
             this.logger.trace(SEND_MARKER, "Tried to send a message from the wrong side");
             return;
         }
-        this.logger.trace(SEND_MARKER, "Sending packet {} from server to the world {}", packet.getClass().getName(), world);
-        this.channel.send(PacketDistributor.DIMENSION.with(((Level) world)::dimension), packet);
+        this.logger.trace(SEND_MARKER, "Sending packet {} from server to the level {}", packet.getClass().getName(), level);
+        this.channel.send(PacketDistributor.DIMENSION.with(((Level) level)::dimension), packet);
     }
 
     /**
@@ -261,17 +212,17 @@ public final class NetworkHandler {
      *
      * @side server
      * @param packet the Packet to send
-     * @param world  the World to send to
+     * @param level  the World to send to
      * @param pos    the center position around which the radius is calculated
      * @param radius the radius in which players receive the packet
      */
-    public void sendToAllAround(IPacket packet, LevelAccessor world, BlockPos pos, float radius) {
-        if (world.isClientSide()) {
+    public void sendToAllAround(IPacket packet, LevelAccessor level, BlockPos pos, float radius) {
+        if (level.isClientSide()) {
             this.logger.trace(SEND_MARKER, "Tried to send a message from the wrong side");
             return;
         }
-        this.logger.trace(SEND_MARKER, "Sending packet {} to all clients in the world {} in radius {} around position {}", packet.getClass().getName(), world, radius, pos);
-        this.channel.send(PacketDistributor.NEAR.with(PacketDistributor.TargetPoint.p(pos.getX(), pos.getY(), pos.getZ(), radius, ((Level) world).dimension())), packet);
+        this.logger.trace(SEND_MARKER, "Sending packet {} to all clients in the level {} in radius {} around position {}", packet.getClass().getName(), level, radius, pos);
+        this.channel.send(PacketDistributor.NEAR.with(PacketDistributor.TargetPoint.p(pos.getX(), pos.getY(), pos.getZ(), radius, ((Level) level).dimension())), packet);
     }
 
     /**
@@ -279,11 +230,11 @@ public final class NetworkHandler {
      *
      * @side server
      * @param packet the Packet to send
-     * @param world  the World to send to
+     * @param level  the World to send to
      * @param pos    the position within the tracked chunk
      */
-    public void sendToAllTracking(IPacket packet, LevelAccessor world, BlockPos pos) {
-        this.sendToAllTracking(packet, ((ServerLevel) world).getChunkAt(pos));
+    public void sendToAllTracking(IPacket packet, LevelAccessor level, BlockPos pos) {
+        this.sendToAllTracking(packet, ((ServerLevel) level).getChunkAt(pos));
     }
 
     /**
@@ -291,11 +242,11 @@ public final class NetworkHandler {
      *
      * @side server
      * @param packet the Packet to send
-     * @param world  the World to send to
+     * @param level  the World to send to
      * @param pos    the position of the chunk
      */
-    public void sendToAllTracking(IPacket packet, LevelAccessor world, ChunkPos pos) {
-        this.sendToAllTracking(packet, ((ServerLevel) world).getChunkAt(pos.getWorldPosition()));
+    public void sendToAllTracking(IPacket packet, LevelAccessor level, ChunkPos pos) {
+        this.sendToAllTracking(packet, ((ServerLevel) level).getChunkAt(pos.getWorldPosition()));
     }
 
     /**
@@ -393,6 +344,40 @@ public final class NetworkHandler {
     public void reply(IPacket packet, NetworkEvent.Context context) {
         this.logger.trace(SEND_MARKER, "Sending packet {} as reply to context NetworkEvent.Context[{}]", packet.getClass().getName(), context.getDirection().name());
         this.channel.reply(packet, context);
+    }
+
+    private int nextID() {
+        synchronized (id) {
+            return id.getAndIncrement();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends IPacket> void register(Class<T> clazz, Optional<NetworkDirection> dir) {
+        BiConsumer<T, FriendlyByteBuf> encoder = IPacket::serialize;
+        Function<FriendlyByteBuf, T> decoder = Arrays.stream(clazz.getConstructors())
+                                                     .map(constructor -> (Constructor<T>)constructor)
+                                                     .filter(constructor -> constructor.getParameterCount() == 0
+                                                                            || (constructor.getParameterCount() == 1
+                                                                                && constructor.getParameterTypes()[0].equals(FriendlyByteBuf.class)))
+                                                     .max(Comparator.comparingInt(Constructor::getParameterCount))
+                                                     .<ThrowingFunction<FriendlyByteBuf, T>>map(constructor -> constructor.getParameterCount() == 0
+                                                             ? (buf) -> instantiatePacket(constructor, buf)
+                                                             : constructor::newInstance)
+                                                     .orElseThrow(() -> new IllegalArgumentException(String.format("%s does not supply a deserialization mechanism", clazz)));
+        BiConsumer<T, Supplier<NetworkEvent.Context>> consumer = (msg, supp) -> {
+            NetworkEvent.Context context = supp.get();
+            if (context == null) return;
+            if (dir.isPresent() && dir.get() != context.getDirection()) return;
+            context.setPacketHandled(msg.handle_(context));
+        };
+        this.register(clazz, encoder, decoder, consumer, dir);
+    }
+
+    private <T extends IPacket> T instantiatePacket(final Constructor<T> constructor, final FriendlyByteBuf buf) throws InvocationTargetException, InstantiationException, IllegalAccessException {
+        T packet = constructor.newInstance();
+        packet.deserialize(buf);
+        return packet;
     }
 
     private interface ThrowingFunction<T, R> extends Function<T, R> {
