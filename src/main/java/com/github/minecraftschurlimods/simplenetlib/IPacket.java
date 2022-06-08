@@ -1,6 +1,7 @@
 package com.github.minecraftschurlimods.simplenetlib;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkEvent;
 
 /**
@@ -55,6 +56,11 @@ import net.minecraftforge.network.NetworkEvent;
 @SuppressWarnings("unused")
 public interface IPacket {
     /**
+     * @return The id of the packet.
+     */
+    ResourceLocation id();
+
+    /**
      * @param buf the {@link FriendlyByteBuf} to put the information into
      */
     void serialize(FriendlyByteBuf buf);
@@ -63,6 +69,12 @@ public interface IPacket {
      * @param buf the {@link FriendlyByteBuf} containing the information
      */
     default void deserialize(FriendlyByteBuf buf) {throw new NotImplementedException();}
+
+    /**
+     * @param id  the {@link ResourceLocation id} of the packet
+     * @param buf the {@link FriendlyByteBuf} containing the information
+     */
+    default void deserialize(ResourceLocation id, FriendlyByteBuf buf) {this.deserialize(buf);}
 
     /**
      * Handle the received message in this method

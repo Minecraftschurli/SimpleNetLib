@@ -2,6 +2,7 @@ package com.github.minecraftschurlimods.simplenetlib;
 
 import com.mojang.serialization.Codec;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Abstract base class for a Packet using a codec to encode and decode the data.
@@ -9,6 +10,7 @@ import net.minecraft.network.FriendlyByteBuf;
  * @param <T> the datatype of the data being sent.
  */
 public abstract class CodecPacket<T> implements IPacket {
+    protected ResourceLocation id;
     protected final T data;
 
     /**
@@ -16,7 +18,8 @@ public abstract class CodecPacket<T> implements IPacket {
      *
      * @param data the data to send.
      */
-    public CodecPacket(T data) {
+    public CodecPacket(ResourceLocation id, T data) {
+        this.id = id;
         this.data = data;
     }
 
@@ -24,13 +27,14 @@ public abstract class CodecPacket<T> implements IPacket {
      * Constructor for deserialization.<br>
      * Subclasses must have this constructor present.
      */
-    public CodecPacket(FriendlyByteBuf buf) {
-        this.data = buf.readWithCodec(this.getCodec());
+    public CodecPacket(ResourceLocation id, FriendlyByteBuf buf) {
+        this.id = id;
+        this.data = buf.readWithCodec(this.codec());
     }
 
     @Override
     public void serialize(FriendlyByteBuf buf) {
-        buf.writeWithCodec(this.getCodec(), this.data);
+        buf.writeWithCodec(this.codec(), this.data);
     }
 
     /**
@@ -38,5 +42,5 @@ public abstract class CodecPacket<T> implements IPacket {
      *
      * @return the codec to encode and decode the data.
      */
-    protected abstract Codec<T> getCodec();
+    protected abstract Codec<T> codec();
 }
