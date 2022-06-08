@@ -43,4 +43,9 @@ public abstract class CodecPacket<T> implements IPacket {
      * @return the codec to encode and decode the data.
      */
     protected abstract Codec<T> codec();
+
+    @Override
+    public ResourceLocation id() {
+        return this.id;
+    }
 }
