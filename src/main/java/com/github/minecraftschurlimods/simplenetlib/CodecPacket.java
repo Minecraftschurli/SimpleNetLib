@@ -37,15 +37,15 @@ public abstract class CodecPacket<T> implements IPacket {
         buf.writeWithCodec(this.codec(), this.data);
     }
 
+    @Override
+    public ResourceLocation id() {
+        return this.id;
+    }
+
     /**
      * Implement this method and return the codec to encode and decode the data.
      *
      * @return the codec to encode and decode the data.
      */
     protected abstract Codec<T> codec();
-
-    @Override
-    public ResourceLocation id() {
-        return this.id;
-    }
 }
