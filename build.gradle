@@ -179,6 +179,7 @@ publishing {
                     password System.getenv("MAVEN_PASSWORD")
                 }
             } else {
+                println "Using repo folder"
                 url "$buildDir/repo"
             }
         }

@@ -29,12 +29,12 @@ public abstract class CodecPacket<T> implements IPacket {
      */
     public CodecPacket(ResourceLocation id, FriendlyByteBuf buf) {
         this.id = id;
-        this.data = buf.readWithCodec(this.codec());
+        this.data = buf.readJsonWithCodec(this.codec());
     }
 
     @Override
     public void serialize(FriendlyByteBuf buf) {
-        buf.writeWithCodec(this.codec(), this.data);
+        buf.writeJsonWithCodec(this.codec(), this.data);
     }
 
     @Override
