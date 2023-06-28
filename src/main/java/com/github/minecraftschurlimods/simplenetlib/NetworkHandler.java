@@ -300,7 +300,7 @@ public final class NetworkHandler {
      * @param entity the tracked Entity
      */
     public void sendToAllTracking(IPacket packet, Entity entity) {
-        if (entity.level.isClientSide()) {
+        if (entity.level().isClientSide()) {
             this.logger.trace(SEND_MARKER, "Tried to send a message from the wrong side");
             return;
         }
@@ -331,7 +331,7 @@ public final class NetworkHandler {
      * @param player the Player to send to
      */
     public void sendToPlayer(IPacket packet, Player player) {
-        if (player.level.isClientSide() || !(player instanceof ServerPlayer)) {
+        if (player.level().isClientSide() || !(player instanceof ServerPlayer)) {
             this.logger.trace(SEND_MARKER, "Tried to send a message from the wrong side");
             return;
         }
