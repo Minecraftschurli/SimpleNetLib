@@ -1,6 +1,9 @@
 package com.github.minecraftschurlimods.simplenetlib;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DynamicOps;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 
@@ -29,12 +32,12 @@ public abstract class CodecPacket<T> implements IPacket {
      */
     public CodecPacket(ResourceLocation id, FriendlyByteBuf buf) {
         this.id = id;
-        this.data = buf.readJsonWithCodec(this.codec());
+        this.data = buf.readWithCodec(this.ops(), this.codec());
     }
 
     @Override
     public void serialize(FriendlyByteBuf buf) {
-        buf.writeJsonWithCodec(this.codec(), this.data);
+        buf.writeWithCodec(this.ops(), this.codec(), this.data);
     }
 
     @Override
@@ -48,4 +51,8 @@ public abstract class CodecPacket<T> implements IPacket {
      * @return the codec to encode and decode the data.
      */
     protected abstract Codec<T> codec();
+
+    protected DynamicOps<Tag> ops() {
+        return NbtOps.INSTANCE;
+    }
 }
